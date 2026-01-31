@@ -1,26 +1,255 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Paleta Vintage - Chá de Panela */
+    --wine: 355 55% 32%;          /* #722F37 - Cor principal */
+    --cream: 39 33% 93%;          /* #F5F0E8 - Fundo vintage */
+    --sage: 100 15% 43%;          /* #6B7F5E - Verde oliva */
+    --rose: 345 52% 57%;          /* #C75B7A - Detalhes rosa */
+    --ink: 20 8% 16%;             /* #2D2926 - Texto escuro */
+
+    /* Mapeamento shadcn/ui para paleta vintage */
+    --background: 39 33% 93%;     /* cream */
+    --foreground: 20 8% 16%;      /* ink */
+
+    --card: 39 33% 96%;           /* cream mais claro */
+    --card-foreground: 20 8% 16%; /* ink */
+
+    --popover: 39 33% 96%;
+    --popover-foreground: 20 8% 16%;
+
+    --primary: 355 55% 32%;       /* wine */
+    --primary-foreground: 39 33% 96%;
+
+    --secondary: 39 20% 88%;      /* cream escuro */
+    --secondary-foreground: 20 8% 16%;
+
+    --muted: 39 20% 88%;
+    --muted-foreground: 20 8% 40%;
+
+    --accent: 345 52% 57%;        /* rose */
+    --accent-foreground: 39 33% 96%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 39 20% 78%;
+    --input: 39 20% 78%;
+    --ring: 355 55% 32%;          /* wine */
+
+    --radius: 0.25rem;
+
+    /* Cores adicionais para uso direto */
+    --color-wine: #722F37;
+    --color-cream: #F5F0E8;
+    --color-sage: #6B7F5E;
+    --color-rose: #C75B7A;
+    --color-ink: #2D2926;
+  }
+
+  /* Removido modo escuro - site apenas vintage */
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  }
+
+  /* Textura de papel vintage sutil */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(45, 41, 38, 0.03) 2px,
+        rgba(45, 41, 38, 0.03) 4px
+      );
+    z-index: 9999;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utilitários de tipografia vintage */
+@layer utilities {
+  .font-script {
+    font-family: var(--font-playfair), Georgia, serif;
+    font-style: italic;
+  }
+
+  .font-display {
+    font-family: var(--font-playfair), Georgia, serif;
+  }
+
+  .font-serif {
+    font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  }
+
+  .font-body {
+    font-family: var(--font-source-serif), Georgia, "Times New Roman", serif;
+  }
+
+  /* Sombras vintage offset */
+  .shadow-vintage {
+    box-shadow: 3px 3px 0 0 hsl(var(--ink) / 0.15);
+  }
+
+  .shadow-vintage-lg {
+    box-shadow: 5px 5px 0 0 hsl(var(--ink) / 0.15);
+  }
+
+  .shadow-vintage-wine {
+    box-shadow: 3px 3px 0 0 hsl(var(--wine) / 0.3);
+  }
+
+  /* Bordas vintage */
+  .border-vintage {
+    border: 1px solid hsl(var(--ink) / 0.2);
+  }
+
+  .border-vintage-dark {
+    border: 2px solid hsl(var(--ink) / 0.4);
+  }
+
+  /* Filtro sépia para fotos */
+  .filter-vintage {
+    filter: sepia(15%) contrast(1.05) brightness(0.98);
+  }
+
+  /* Gradiente de papel antigo */
+  .bg-paper {
+    background: linear-gradient(
+      180deg,
+      hsl(39 33% 95%) 0%,
+      hsl(39 33% 93%) 50%,
+      hsl(39 28% 90%) 100%
+    );
+  }
+
+  /* Efeito de borda rasgada usando clip-path */
+  .torn-edge-top {
+    clip-path: polygon(
+      0% 3%, 2% 0%, 5% 2%, 8% 0%, 12% 3%, 15% 1%, 18% 2%, 22% 0%,
+      25% 2%, 28% 0%, 32% 3%, 35% 1%, 38% 2%, 42% 0%, 45% 3%,
+      48% 1%, 52% 2%, 55% 0%, 58% 3%, 62% 1%, 65% 2%, 68% 0%,
+      72% 3%, 75% 1%, 78% 2%, 82% 0%, 85% 3%, 88% 1%, 92% 2%,
+      95% 0%, 98% 3%, 100% 1%, 100% 100%, 0% 100%
+    );
+  }
+
+  .torn-edge-bottom {
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 97%, 98% 100%, 95% 98%, 92% 100%, 88% 97%,
+      85% 99%, 82% 100%, 78% 98%, 75% 100%, 72% 97%, 68% 99%, 65% 100%,
+      62% 98%, 58% 100%, 55% 97%, 52% 99%, 48% 100%, 45% 98%, 42% 100%,
+      38% 97%, 35% 99%, 32% 100%, 28% 98%, 25% 100%, 22% 97%, 18% 99%,
+      15% 100%, 12% 98%, 8% 100%, 5% 97%, 2% 99%, 0% 100%
+    );
+  }
+
+  /* Texto estilo jornal */
+  .text-headline {
+    font-family: var(--font-playfair), Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .text-subheadline {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+  }
+
+  /* Decoração de linha */
+  .line-ornament {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .line-ornament::before,
+  .line-ornament::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--ink) / 0.3),
+      transparent
+    );
+  }
+}
+
+/* Animações sutis */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Animação de rolo de filme vertical */
+@keyframes filmScrollVertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+/* Animação de rolo de filme horizontal */
+@keyframes filmScrollHorizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-gentle-pulse {
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+
+.animate-film-scroll-vertical {
+  animation: filmScrollVertical linear infinite;
+}
+
+.animate-film-scroll-horizontal {
+  animation: filmScrollHorizontal linear infinite;
 }
