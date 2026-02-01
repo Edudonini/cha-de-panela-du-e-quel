@@ -3,11 +3,17 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/auth";
 import { z } from "zod";
 
+// Helper para aceitar URL válida, string vazia ou null
+const optionalUrl = z.preprocess(
+  (val) => (val === "" ? null : val),
+  z.string().url().nullable().optional()
+);
+
 const updateItemSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
-  image_url: z.string().url().nullable().optional(),
-  store_url: z.string().url().nullable().optional(),
+  image_url: optionalUrl,
+  store_url: optionalUrl,
   category: z.string().nullable().optional(),
   price_suggested_cents: z.number().int().min(0).optional(),
   is_group_gift: z.boolean().optional(),
@@ -50,7 +56,7 @@ export async function PUT(
       }
     }
 
-    if (!isGroupGift && validated.goal_cents !== undefined) {
+    if (!isGroupGift && validated.goal_cents) {
       return NextResponse.json(
         { error: "goal_cents não deve ser definido para itens normais" },
         { status: 400 }

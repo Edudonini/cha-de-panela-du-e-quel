@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Upload, Link as LinkIcon, X } from "lucide-react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -56,6 +56,10 @@ export default function AdminItensPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GiftItemWithDetails | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -104,6 +108,11 @@ export default function AdminItensPage() {
       goal_cents: "",
       status: "active",
     });
+    setPreviewUrl(null);
+    setImageMode("upload");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setIsDialogOpen(true);
   };
 
@@ -120,7 +129,68 @@ export default function AdminItensPage() {
       goal_cents: item.goal_cents ? (item.goal_cents / 100).toString() : "",
       status: item.status,
     });
+    setPreviewUrl(item.image_url || null);
+    setImageMode(item.image_url ? "url" : "upload");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setIsDialogOpen(true);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+
+    try {
+      // Preview local imediato
+      const localPreview = URL.createObjectURL(file);
+      setPreviewUrl(localPreview);
+
+      // Upload para o servidor
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+
+      const response = await fetch("/api/admin/items/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao fazer upload");
+      }
+
+      const data = await response.json();
+      setFormData((prev) => ({ ...prev, image_url: data.url }));
+      setPreviewUrl(data.url);
+
+      // Limpar preview local
+      URL.revokeObjectURL(localPreview);
+
+      toast({
+        title: "Upload concluído",
+        description: "Imagem enviada com sucesso!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Não foi possível enviar a imagem",
+        variant: "destructive",
+      });
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, image_url: "" }));
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -330,27 +400,133 @@ export default function AdminItensPage() {
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">URL da Imagem</Label>
+              {/* Seção de Imagem */}
+              <div className="space-y-3">
+                <Label>Imagem do Produto</Label>
+
+                {/* Toggle Upload/URL */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={imageMode === "upload" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageMode("upload")}
+                    className="gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={imageMode === "url" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageMode("url")}
+                    className="gap-2"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    URL Externa
+                  </Button>
+                </div>
+
+                {/* Upload Mode */}
+                {imageMode === "upload" && (
+                  <div className="space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full justify-start gap-2"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          Selecionar imagem do computador
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Formatos: JPG, PNG, WebP, GIF. Máximo 5MB.
+                    </p>
+                  </div>
+                )}
+
+                {/* URL Mode */}
+                {imageMode === "url" && (
                   <Input
                     id="image_url"
+                    placeholder="https://exemplo.com/imagem.jpg"
                     value={formData.image_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, image_url: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, image_url: e.target.value });
+                      setPreviewUrl(e.target.value || null);
+                    }}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="store_url">URL da Loja</Label>
-                  <Input
-                    id="store_url"
-                    value={formData.store_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, store_url: e.target.value })
-                    }
-                  />
-                </div>
+                )}
+
+                {/* Preview */}
+                {previewUrl && (
+                  <div className="relative inline-block">
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          target.nextElementSibling?.classList.remove("hidden");
+                        }}
+                        onLoad={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "block";
+                          target.nextElementSibling?.classList.add("hidden");
+                        }}
+                      />
+                      <div className="hidden absolute inset-0 flex items-center justify-center text-xs text-muted-foreground text-center p-2">
+                        Imagem não carregou (servidor externo pode estar bloqueando)
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* URL da Loja */}
+              <div className="space-y-2">
+                <Label htmlFor="store_url">URL da Loja</Label>
+                <Input
+                  id="store_url"
+                  value={formData.store_url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, store_url: e.target.value })
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
