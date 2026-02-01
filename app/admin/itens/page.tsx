@@ -17,9 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Loader2, Upload, Link as LinkIcon, X } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Upload, Link as LinkIcon, X, ChevronDown, ChevronUp, Ban } from "lucide-react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 type GiftItemWithDetails = {
   id: string;
@@ -59,8 +64,55 @@ export default function AdminItensPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [cancellingReservation, setCancellingReservation] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const toggleItemExpanded = (itemId: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  const handleCancelReservation = async (reservationId: string) => {
+    if (!confirm("Tem certeza que deseja cancelar esta reserva?")) return;
+
+    setCancellingReservation(reservationId);
+    try {
+      const response = await fetch("/api/admin/moderation/cancel-reservation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: reservationId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao cancelar reserva");
+      }
+
+      toast({
+        title: "Reserva cancelada",
+        description: "A reserva foi cancelada com sucesso",
+      });
+
+      fetchItems();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível cancelar a reserva",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingReservation(null);
+    }
+  };
 
   const [formData, setFormData] = useState({
     title: "",
@@ -297,76 +349,153 @@ export default function AdminItensPage() {
         <h1 className="text-3xl font-bold mb-8">Gerenciar Itens</h1>
 
         <div className="grid gap-4">
-          {items.map((item) => (
-            <Card key={item.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {item.title}
-                      <Badge variant={item.status === "active" ? "default" : "secondary"}>
-                        {item.status}
-                      </Badge>
-                      {item.is_group_gift && (
-                        <Badge variant="outline">Vaquinha</Badge>
+          {items.map((item) => {
+            const activeReservations = item.reservations.filter(r => r.status === "reserved");
+            const hasActiveReservations = activeReservations.length > 0;
+            const isExpanded = expandedItems.has(item.id);
+
+            return (
+              <Card key={item.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center gap-2">
+                        {item.title}
+                        <Badge variant={item.status === "active" ? "default" : "secondary"}>
+                          {item.status}
+                        </Badge>
+                        {item.is_group_gift && (
+                          <Badge variant="outline">Vaquinha</Badge>
+                        )}
+                      </CardTitle>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
                       )}
-                    </CardTitle>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {item.description}
-                      </p>
-                    )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Valor sugerido: </span>
-                    <span className="font-medium">
-                      R$ {(item.price_suggested_cents / 100).toFixed(2).replace(".", ",")}
-                    </span>
-                  </div>
-                  {item.is_group_gift && item.goal_cents && (
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Meta: </span>
+                      <span className="text-muted-foreground">Valor sugerido: </span>
                       <span className="font-medium">
-                        R$ {(item.goal_cents / 100).toFixed(2).replace(".", ",")}
+                        R$ {(item.price_suggested_cents / 100).toFixed(2).replace(".", ",")}
                       </span>
                     </div>
-                  )}
-                  {item.reservations.length > 0 && (
-                    <div>
-                      <span className="text-muted-foreground">Reservas: </span>
-                      <span className="font-medium">{item.reservations.length}</span>
-                    </div>
-                  )}
-                  {item.contributions.length > 0 && (
-                    <div>
-                      <span className="text-muted-foreground">Contribuições: </span>
-                      <span className="font-medium">{item.contributions.length}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    {item.is_group_gift && item.goal_cents && (
+                      <div>
+                        <span className="text-muted-foreground">Meta: </span>
+                        <span className="font-medium">
+                          R$ {(item.goal_cents / 100).toFixed(2).replace(".", ",")}
+                        </span>
+                      </div>
+                    )}
+                    {item.contributions.length > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Contribuições: </span>
+                        <span className="font-medium">{item.contributions.length}</span>
+                      </div>
+                    )}
+
+                    {/* Seção de Reservas Expandível */}
+                    {item.reservations.length > 0 && (
+                      <Collapsible open={isExpanded} onOpenChange={() => toggleItemExpanded(item.id)}>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-between mt-2 h-auto py-2">
+                            <span className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Reservas:</span>
+                              <Badge variant={hasActiveReservations ? "default" : "secondary"}>
+                                {activeReservations.length} ativa{activeReservations.length !== 1 ? "s" : ""}
+                              </Badge>
+                              {item.reservations.length > activeReservations.length && (
+                                <Badge variant="outline">
+                                  {item.reservations.length - activeReservations.length} cancelada{item.reservations.length - activeReservations.length !== 1 ? "s" : ""}
+                                </Badge>
+                              )}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="border rounded-md divide-y">
+                            {item.reservations.map((reservation) => (
+                              <div
+                                key={reservation.id}
+                                className={`p-3 flex items-center justify-between ${
+                                  reservation.status === "cancelled" ? "bg-muted/50" : ""
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">
+                                      {reservation.is_anonymous ? "Anônimo" : reservation.guest_name}
+                                    </span>
+                                    <Badge
+                                      variant={reservation.status === "reserved" ? "default" : "secondary"}
+                                      className="text-xs"
+                                    >
+                                      {reservation.status === "reserved" ? "Ativa" : "Cancelada"}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(reservation.created_at).toLocaleDateString("pt-BR", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                </div>
+                                {reservation.status === "reserved" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCancelReservation(reservation.id)}
+                                    disabled={cancellingReservation === reservation.id}
+                                    className="gap-1 text-destructive hover:text-destructive"
+                                  >
+                                    {cancellingReservation === reservation.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Ban className="h-3 w-3" />
+                                    )}
+                                    Cancelar
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

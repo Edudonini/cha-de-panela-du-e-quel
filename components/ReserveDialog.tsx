@@ -75,6 +75,36 @@ export function ReserveDialog({
         throw new Error(data.error || "Erro ao reservar");
       }
 
+      // Salvar reserva no localStorage para permitir cancelamento
+      // Tentar obter o reservation_id do retorno da RPC ou buscar a reserva
+      let reservationId = data?.reservation_id;
+
+      if (!reservationId) {
+        // Se a RPC não retornou o ID, buscar a reserva mais recente do usuário para este item
+        const { data: reservationData } = await supabaseBrowser()
+          .from("gift_reservations")
+          .select("id")
+          .eq("item_id", item.id)
+          .eq("guest_name", guestName.trim())
+          .eq("status", "reserved")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        reservationId = reservationData?.id;
+      }
+
+      if (reservationId) {
+        const reservationInfo = {
+          reservation_id: reservationId,
+          guest_name: guestName.trim(),
+          item_id: item.id,
+          item_title: item.title,
+          created_at: new Date().toISOString(),
+        };
+        localStorage.setItem(`reservation_${item.id}`, JSON.stringify(reservationInfo));
+      }
+
       toast({
         title: "Reserva confirmada!",
         description: "Obrigado por escolher este presente!",

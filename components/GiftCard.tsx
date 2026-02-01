@@ -8,12 +8,21 @@ import { Check } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+interface UserReservation {
+  reservation_id: string;
+  guest_name: string;
+  item_id: string;
+  item_title: string;
+}
+
 interface GiftCardProps {
   item: GiftItemPublic;
   onReserve?: () => void;
+  userReservation?: UserReservation | null;
+  onCancelReservation?: () => void;
 }
 
-export function GiftCard({ item, onReserve }: GiftCardProps) {
+export function GiftCard({ item, onReserve, userReservation, onCancelReservation }: GiftCardProps) {
   const priceFormatted = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -77,7 +86,12 @@ export function GiftCard({ item, onReserve }: GiftCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {item.is_reserved ? (
+            {userReservation ? (
+              <Badge variant="default" className="w-full justify-center gap-1 py-1.5 bg-[#722F37]">
+                <Check className="h-3 w-3" />
+                Sua Reserva
+              </Badge>
+            ) : item.is_reserved ? (
               <Badge variant="outline" className="w-full justify-center gap-1 py-1.5">
                 <Check className="h-3 w-3" />
                 Reservado
@@ -91,15 +105,26 @@ export function GiftCard({ item, onReserve }: GiftCardProps) {
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-2 pt-0">
-          <Button
-            onClick={onReserve}
-            disabled={item.is_reserved}
-            className="w-full"
-            variant={item.is_reserved ? "secondary" : "vintage"}
-            aria-label={item.is_reserved ? "Item ja reservado" : `Reservar ${item.title}`}
-          >
-            {item.is_reserved ? "Ja Reservado" : "Reservar"}
-          </Button>
+          {userReservation ? (
+            <Button
+              onClick={onCancelReservation}
+              className="w-full"
+              variant="outline"
+              aria-label={`Cancelar reserva de ${item.title}`}
+            >
+              Cancelar Minha Reserva
+            </Button>
+          ) : (
+            <Button
+              onClick={onReserve}
+              disabled={item.is_reserved}
+              className="w-full"
+              variant={item.is_reserved ? "secondary" : "vintage"}
+              aria-label={item.is_reserved ? "Item ja reservado" : `Reservar ${item.title}`}
+            >
+              {item.is_reserved ? "Ja Reservado" : "Reservar"}
+            </Button>
+          )}
           {item.store_url && (
             <Button
               variant="outline"

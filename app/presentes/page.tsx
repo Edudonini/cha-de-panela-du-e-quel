@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { ReserveDialog } from "@/components/ReserveDialog";
+import { CancelReservationDialog } from "@/components/CancelReservationDialog";
 import { PixContributionSection } from "@/components/PixContributionSection";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import type { GiftItemPublic, EventConfig } from "@/types/database";
@@ -13,17 +14,46 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { FourPointStar } from "@/components/vintage/FourPointStar";
 
+type UserReservation = {
+  reservation_id: string;
+  guest_name: string;
+  item_id: string;
+  item_title: string;
+};
+
 export default function PresentesPage() {
   const [items, setItems] = useState<GiftItemPublic[]>([]);
   const [eventConfig, setEventConfig] = useState<EventConfig | null>(null);
   const [selectedItem, setSelectedItem] = useState<GiftItemPublic | null>(null);
   const [isReserveDialogOpen, setIsReserveDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<UserReservation | null>(null);
+  const [userReservations, setUserReservations] = useState<Map<string, UserReservation>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [guestName, setGuestName] = useState("");
 
   useEffect(() => {
     setGuestName(localStorage.getItem("guest_name") || "");
+    loadUserReservations();
   }, []);
+
+  const loadUserReservations = () => {
+    const reservations = new Map<string, UserReservation>();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("reservation_")) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key) || "");
+          if (data.reservation_id && data.item_id) {
+            reservations.set(data.item_id, data);
+          }
+        } catch {
+          // Ignorar dados inválidos
+        }
+      }
+    }
+    setUserReservations(reservations);
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -57,6 +87,26 @@ export default function PresentesPage() {
   const handleReserve = (item: GiftItemPublic) => {
     setSelectedItem(item);
     setIsReserveDialogOpen(true);
+  };
+
+  const handleCancelReservation = (item: GiftItemPublic) => {
+    const reservation = userReservations.get(item.id);
+    if (reservation) {
+      setSelectedItem(item);
+      setSelectedReservation(reservation);
+      setIsCancelDialogOpen(true);
+    }
+  };
+
+  const handleCancelSuccess = () => {
+    if (selectedItem) {
+      localStorage.removeItem(`reservation_${selectedItem.id}`);
+      loadUserReservations();
+    }
+    setIsCancelDialogOpen(false);
+    setSelectedItem(null);
+    setSelectedReservation(null);
+    window.location.reload();
   };
 
   const handleDialogClose = () => {
@@ -174,6 +224,8 @@ export default function PresentesPage() {
                 <GiftCard
                   item={item}
                   onReserve={() => handleReserve(item)}
+                  userReservation={userReservations.get(item.id) || null}
+                  onCancelReservation={() => handleCancelReservation(item)}
                 />
               </motion.div>
             ))}
@@ -199,6 +251,18 @@ export default function PresentesPage() {
             item={selectedItem}
             guestName={guestName}
             eventConfig={eventConfig}
+          />
+        )}
+
+        {/* Dialog de cancelamento */}
+        {selectedItem && selectedReservation && (
+          <CancelReservationDialog
+            open={isCancelDialogOpen}
+            onOpenChange={setIsCancelDialogOpen}
+            reservationId={selectedReservation.reservation_id}
+            itemTitle={selectedItem.title}
+            expectedGuestName={selectedReservation.guest_name}
+            onSuccess={handleCancelSuccess}
           />
         )}
       </main>
