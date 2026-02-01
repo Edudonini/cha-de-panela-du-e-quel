@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { ReserveDialog } from "@/components/ReserveDialog";
-import { ContributeDialog } from "@/components/ContributeDialog";
+import { PixContributionSection } from "@/components/PixContributionSection";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import type { GiftItemPublic, EventConfig } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,12 @@ export default function PresentesPage() {
   const [eventConfig, setEventConfig] = useState<EventConfig | null>(null);
   const [selectedItem, setSelectedItem] = useState<GiftItemPublic | null>(null);
   const [isReserveDialogOpen, setIsReserveDialogOpen] = useState(false);
-  const [isContributeDialogOpen, setIsContributeDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [guestName, setGuestName] = useState("");
 
-  const guestName =
-    typeof window !== "undefined"
-      ? localStorage.getItem("guest_name") || ""
-      : "";
+  useEffect(() => {
+    setGuestName(localStorage.getItem("guest_name") || "");
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -41,7 +40,6 @@ export default function PresentesPage() {
           .from("v_gift_items_public")
           .select("*")
           .in("status", ["active", "delivered"])
-          .order("is_group_gift", { ascending: false })
           .order("price_suggested_cents", { ascending: true });
 
         if (error) throw error;
@@ -61,14 +59,8 @@ export default function PresentesPage() {
     setIsReserveDialogOpen(true);
   };
 
-  const handleContribute = (item: GiftItemPublic) => {
-    setSelectedItem(item);
-    setIsContributeDialogOpen(true);
-  };
-
   const handleDialogClose = () => {
     setIsReserveDialogOpen(false);
-    setIsContributeDialogOpen(false);
     setSelectedItem(null);
     window.location.reload();
   };
@@ -84,6 +76,7 @@ export default function PresentesPage() {
             <Skeleton className="h-10 w-64 mb-2" />
             <Skeleton className="h-5 w-96" />
           </div>
+          <Skeleton className="h-64 mb-10" />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} className="h-96" />
@@ -97,7 +90,7 @@ export default function PresentesPage() {
   return (
     <div className="min-h-screen bg-paper">
       <main className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
-        {/* Botão voltar */}
+        {/* Botao voltar */}
         <div className="mb-6">
           <Button variant="ghost" asChild className="gap-2 text-[#722F37] hover:text-[#722F37]/80">
             <Link href="/">
@@ -107,7 +100,7 @@ export default function PresentesPage() {
           </Button>
         </div>
 
-        {/* Cabeçalho estilo jornal */}
+        {/* Cabecalho estilo jornal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -123,21 +116,21 @@ export default function PresentesPage() {
               <div className="h-[2px] flex-1 max-w-24 bg-gradient-to-l from-transparent to-[#2D2926]/30" />
             </div>
 
-            {/* Título principal */}
+            {/* Titulo principal */}
             <div className="relative inline-block">
               <h1 className="font-display text-3xl md:text-4xl text-[#722F37] tracking-tight">
                 Lista de Presentes
               </h1>
-              {/* Decoração de cantos */}
+              {/* Decoracao de cantos */}
               <div className="absolute -top-2 -left-4 w-3 h-3 border-t-2 border-l-2 border-[#722F37]" />
               <div className="absolute -top-2 -right-4 w-3 h-3 border-t-2 border-r-2 border-[#722F37]" />
               <div className="absolute -bottom-2 -left-4 w-3 h-3 border-b-2 border-l-2 border-[#722F37]" />
               <div className="absolute -bottom-2 -right-4 w-3 h-3 border-b-2 border-r-2 border-[#722F37]" />
             </div>
 
-            {/* Subtítulo */}
+            {/* Subtitulo */}
             <p className="font-serif text-[#2D2926]/70 max-w-md mx-auto">
-              Escolha um presente ou contribua com uma vaquinha
+              Escolha um presente para reservar ou contribua via PIX
             </p>
 
             {/* Linha decorativa inferior */}
@@ -149,6 +142,15 @@ export default function PresentesPage() {
           </div>
         </motion.div>
 
+        {/* Secao PIX destacada */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <PixContributionSection eventConfig={eventConfig} guestName={guestName} />
+        </motion.div>
+
         {/* Grid de presentes */}
         {items.length === 0 ? (
           <motion.div
@@ -157,7 +159,7 @@ export default function PresentesPage() {
             className="text-center py-12"
           >
             <p className="font-serif text-[#2D2926]/70 text-lg">
-              Nenhum presente disponível no momento.
+              Nenhum presente disponivel no momento.
             </p>
           </motion.div>
         ) : (
@@ -167,19 +169,18 @@ export default function PresentesPage() {
                 key={item.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: 0.2 + index * 0.1 }}
               >
                 <GiftCard
                   item={item}
                   onReserve={() => handleReserve(item)}
-                  onContribute={() => handleContribute(item)}
                 />
               </motion.div>
             ))}
           </div>
         )}
 
-        {/* Rodapé decorativo */}
+        {/* Rodape decorativo */}
         <div className="pt-12 pb-6">
           <div className="flex items-center justify-center gap-2">
             <FourPointStar size={8} color="rose" />
@@ -190,27 +191,15 @@ export default function PresentesPage() {
           </div>
         </div>
 
-        {/* Diálogos */}
+        {/* Dialog de reserva */}
         {selectedItem && (
-          <>
-            {!selectedItem.is_group_gift ? (
-              <ReserveDialog
-                open={isReserveDialogOpen}
-                onOpenChange={setIsReserveDialogOpen}
-                item={selectedItem}
-                guestName={guestName}
-                eventConfig={eventConfig}
-              />
-            ) : (
-              <ContributeDialog
-                open={isContributeDialogOpen}
-                onOpenChange={setIsContributeDialogOpen}
-                item={selectedItem}
-                guestName={guestName}
-                eventConfig={eventConfig}
-              />
-            )}
-          </>
+          <ReserveDialog
+            open={isReserveDialogOpen}
+            onOpenChange={setIsReserveDialogOpen}
+            item={selectedItem}
+            guestName={guestName}
+            eventConfig={eventConfig}
+          />
         )}
       </main>
     </div>

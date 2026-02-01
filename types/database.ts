@@ -52,7 +52,7 @@ export type GiftReservation = {
 
 export type GiftContribution = {
   id: string;
-  item_id: string;
+  item_id: string | null;
   guest_name: string;
   is_anonymous: boolean;
   amount_cents: number;
