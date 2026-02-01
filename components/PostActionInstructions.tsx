@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, ExternalLink, Gift, Truck } from "lucide-react";
+import { MapPin, ExternalLink, Gift, Truck, Copy, Check } from "lucide-react";
 import { FourPointStar } from "./vintage/FourPointStar";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostActionInstructionsProps {
   deliveryAddress: string;
@@ -17,6 +19,27 @@ export function PostActionInstructions({
   storeUrl,
   onClose,
 }: PostActionInstructionsProps) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(deliveryAddress);
+      setCopied(true);
+      toast({
+        title: "Endereço copiado!",
+        description: "O endereço foi copiado para a área de transferência.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o endereço.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Título com decoração */}
@@ -59,10 +82,23 @@ export function PostActionInstructions({
         <CardContent className="space-y-4">
           <div className="flex items-start gap-3 p-3 bg-[#2D2926]/5 border border-[#2D2926]/10">
             <MapPin className="h-4 w-4 text-[#722F37] mt-0.5 flex-shrink-0" />
-            <div>
+            <div className="flex-1">
               <p className="text-xs text-[#2D2926]/60 font-serif mb-1">Endereço de entrega:</p>
               <p className="text-sm font-serif font-medium text-[#2D2926]">{deliveryAddress}</p>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyAddress}
+              className="flex-shrink-0 h-8 w-8 p-0 hover:bg-[#722F37]/10"
+              title="Copiar endereço"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4 text-[#722F37]" />
+              )}
+            </Button>
           </div>
 
           {storeUrl && (
