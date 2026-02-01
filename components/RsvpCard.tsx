@@ -103,7 +103,7 @@ export function RsvpCard({ guestName, onRsvpComplete }: RsvpCardProps) {
             Vou
           </Button>
           <Button
-            variant={attending === false ? "secondary" : "outline"}
+            variant={attending === false ? "default" : "outline"}
             onClick={() => setAttending(false)}
             className="flex-1 gap-2"
           >
