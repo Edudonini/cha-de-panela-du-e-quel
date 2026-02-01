@@ -8,17 +8,17 @@ import { RsvpCard } from "@/components/RsvpCard";
 import { Button } from "@/components/ui/button";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import type { EventConfig } from "@/types/database";
-import { useRouter } from "next/navigation";
 import { Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FourPointStar } from "@/components/vintage/FourPointStar";
+import { GiftChoiceDialog } from "@/components/GiftChoiceDialog";
 
 export default function Home() {
   const [eventConfig, setEventConfig] = useState<EventConfig | null>(null);
   const [guestName, setGuestName] = useState("");
   const [rsvpComplete, setRsvpComplete] = useState(false);
-  const router = useRouter();
+  const [isGiftDialogOpen, setIsGiftDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchEventConfig() {
@@ -82,7 +82,7 @@ export default function Home() {
               Estamos montando nosso novo lar e queremos celebrar com você.
             </p>
             <p className="font-serif text-sm text-[#2D2926]/70 max-w-2xl mx-auto">
-              Se você quiser nos presentear, escolhemos alguns itens e também deixamos opções para contribuir em itens maiores. Obrigado por fazer parte desse momento.
+              Se você quiser nos presentear, escolhemos alguns itens e também deixamos a opção de presentear via PIX. Obrigado por fazer parte desse momento.
             </p>
             <div className="flex items-center justify-center gap-3">
               <div className="h-px flex-1 max-w-16 bg-gradient-to-r from-transparent to-[#722F37]/30" />
@@ -126,7 +126,7 @@ export default function Home() {
               transition={{ duration: 0.3 }}
             >
               <Button
-                onClick={() => router.push("/presentes")}
+                onClick={() => setIsGiftDialogOpen(true)}
                 size="lg"
                 variant="vintage"
                 className="gap-2"
@@ -136,6 +136,12 @@ export default function Home() {
               </Button>
             </motion.div>
           )}
+
+          {/* Modal de seleção de presente */}
+          <GiftChoiceDialog
+            open={isGiftDialogOpen}
+            onOpenChange={setIsGiftDialogOpen}
+          />
 
           {/* Seção "Como funciona" estilo editorial */}
           <motion.div
@@ -173,12 +179,12 @@ export default function Home() {
                 },
                 {
                   num: "3",
-                  title: "Escolha um presente",
-                  desc: "Reserve um item ou contribua com qualquer valor em uma vaquinha",
+                  title: "Escolha como presentear",
+                  desc: "Reserve um item da lista ou presenteie via PIX com qualquer valor",
                 },
                 {
                   num: "4",
-                  title: "Instruções",
+                  title: "Siga as instruções",
                   desc: "Após confirmar, você verá as instruções (levar no dia ou enviar)",
                 },
               ].map((step, index) => (

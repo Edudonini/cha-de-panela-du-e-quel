@@ -37,6 +37,20 @@ export default function PresentesPage() {
     loadUserReservations();
   }, []);
 
+  // Scroll automático para seção PIX quando URL tiver #pix
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#pix") {
+      // Aguarda um pouco para o conteúdo carregar
+      const timer = setTimeout(() => {
+        const pixSection = document.getElementById("pix");
+        if (pixSection) {
+          pixSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
   const loadUserReservations = () => {
     const reservations = new Map<string, UserReservation>();
     for (let i = 0; i < localStorage.length; i++) {
@@ -180,7 +194,7 @@ export default function PresentesPage() {
 
             {/* Subtitulo */}
             <p className="font-serif text-[#2D2926]/70 max-w-md mx-auto">
-              Escolha um presente para reservar ou contribua via PIX
+              Escolha um presente para reservar ou presenteie via PIX
             </p>
 
             {/* Linha decorativa inferior */}
@@ -190,15 +204,6 @@ export default function PresentesPage() {
               <div className="h-[2px] flex-1 max-w-24 bg-gradient-to-l from-transparent to-[#2D2926]/30" />
             </div>
           </div>
-        </motion.div>
-
-        {/* Secao PIX destacada */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <PixContributionSection eventConfig={eventConfig} guestName={guestName} />
         </motion.div>
 
         {/* Grid de presentes */}
@@ -231,6 +236,16 @@ export default function PresentesPage() {
             ))}
           </div>
         )}
+
+        {/* Secao PIX */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-10"
+        >
+          <PixContributionSection eventConfig={eventConfig} guestName={guestName} />
+        </motion.div>
 
         {/* Rodape decorativo */}
         <div className="pt-12 pb-6">

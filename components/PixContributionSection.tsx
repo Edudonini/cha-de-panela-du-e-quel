@@ -49,7 +49,7 @@ export function PixContributionSection({ eventConfig, guestName }: PixContributi
 
   return (
     <>
-      <section className="mb-10">
+      <section id="pix" className="mb-10">
         <div className="relative border-2 border-[#722F37] bg-[#F5F0E8] p-6 md:p-8">
           {/* Cantos decorativos */}
           <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-[#722F37]" />
@@ -61,14 +61,14 @@ export function PixContributionSection({ eventConfig, guestName }: PixContributi
           <div className="flex items-center justify-center gap-3 mb-6">
             <FourPointStar size={16} color="wine" />
             <h2 className="font-display text-xl md:text-2xl text-[#722F37]">
-              Contribuicao PIX
+              Presentear via PIX
             </h2>
             <FourPointStar size={16} color="wine" />
           </div>
 
           {/* Subtítulo */}
           <p className="text-center font-serif text-[#2D2926]/80 mb-6 max-w-md mx-auto">
-            Quer ajudar com qualquer valor? Faca um PIX e registre sua contribuicao!
+            Quer presentear com qualquer valor? Faca um PIX e registre seu presente!
           </p>
 
           {/* Conteúdo principal */}
@@ -132,7 +132,7 @@ export function PixContributionSection({ eventConfig, guestName }: PixContributi
                 onClick={() => setIsDialogOpen(true)}
                 className="mt-2"
               >
-                Registrar Contribuicao
+                Registrar Presente
               </Button>
             </div>
           </div>

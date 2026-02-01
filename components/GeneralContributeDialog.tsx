@@ -98,20 +98,20 @@ export function GeneralContributeDialog({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao contribuir");
+        throw new Error(data.error || "Erro ao registrar presente");
       }
 
       toast({
-        title: "Contribuicao registrada!",
-        description: "Obrigado por sua contribuicao!",
+        title: "Presente registrado!",
+        description: "Obrigado pelo seu presente!",
       });
 
       setAmount("");
       setIsAnonymous(false);
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Nao foi possivel registrar a contribuicao. Tente novamente.";
-      console.error("Erro ao contribuir:", error);
+      const errorMessage = error instanceof Error ? error.message : "Nao foi possivel registrar o presente. Tente novamente.";
+      console.error("Erro ao registrar presente:", error);
       toast({
         title: "Erro",
         description: errorMessage,
@@ -130,11 +130,11 @@ export function GeneralContributeDialog({
         <DialogHeader>
           <div className="flex items-center gap-2">
             <FourPointStar size={12} color="rose" />
-            <DialogTitle>Registrar Contribuicao PIX</DialogTitle>
+            <DialogTitle>Registrar Presente via PIX</DialogTitle>
             <FourPointStar size={12} color="rose" />
           </div>
           <DialogDescription>
-            Faca o PIX pelo QR Code ou chave abaixo e registre o valor que voce contribuiu.
+            Faca o PIX pelo QR Code ou chave abaixo e registre o valor que voce presenteou.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,10 +187,10 @@ export function GeneralContributeDialog({
 
           <Separator className="bg-[#2D2926]/10" />
 
-          {/* Valor da contribuição */}
+          {/* Valor do presente */}
           <div className="space-y-2">
             <Label htmlFor="amount" className="font-display text-sm text-[#2D2926]">
-              Valor da contribuicao (R$)
+              Valor do presente (R$)
             </Label>
             <Input
               id="amount"
@@ -237,7 +237,7 @@ export function GeneralContributeDialog({
                 Registrando...
               </>
             ) : (
-              "Confirmar Contribuicao"
+              "Confirmar Presente"
             )}
           </Button>
         </DialogFooter>
